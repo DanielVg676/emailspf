@@ -20,4 +20,10 @@ passwordChangeEvents().catch((err) => {
     console.log('Error iniciando ael consumido de eventos de cambio de contraseña:', err);
 });
 
+
+passwordChangeEventsConfirm().catch((err) => {
+    console.log('Error iniciando ael consumido de eventos de cambio de contraseña:', err);
+});
+
+
 export default app;
