@@ -138,19 +138,60 @@ export async function paymentEvents() {
     }
 }
 
+
 async function sendPasswordChangeEmail(data) {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: data.email,
         subject: 'Cambio de Contraseña',
         html: `
-        <p>Hola, ${data.email} has solicitado cambiar tu contraseña.</p>
-        <p>Tu nueva contraseña es: ${data.newPassword}</strong></p>
-        <a href="https://tu-frontend.com/confirmar-cambio?email={{email}}" 
-        style="padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 5px;">
-        Confirmar cambio de contraseña
-        </a>
-
+        <div style="
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #444; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            overflow: hidden;">
+            <header style="
+                background-color: #3498db; 
+                padding: 20px; 
+                text-align: center;">
+                <h1 style="color: white; font-size: 24px; margin: 0;">Cambio de Contraseña</h1>
+            </header>
+            <div style="padding: 20px;">
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    Hola <strong>${data.email}</strong>,
+                </p>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    Has solicitado cambiar tu contraseña. A continuación, encontrarás tu nueva contraseña:
+                </p>
+                <p style="
+                    font-size: 18px; 
+                    font-weight: bold; 
+                    text-align: center; 
+                    background-color: #f8f9fa; 
+                    padding: 10px; 
+                    border: 1px solid #ddd; 
+                    border-radius: 5px; 
+                    margin-bottom: 20px;">
+                    ${data.newPassword}
+                </p>
+                <p style="font-size: 14px; color: #777; margin-top: 20px; text-align: center;">
+                    Si no solicitaste este cambio, ignora este correo.
+                </p>
+            </div>
+            <footer style="
+                background-color: #f8f9fa; 
+                text-align: center; 
+                padding: 10px; 
+                font-size: 12px; 
+                color: #aaa;">
+                &copy; 2025 Tu Empresa. Todos los derechos reservados.
+            </footer>
+        </div>
         `
     };
 
@@ -162,7 +203,7 @@ async function sendPasswordChangeEmail(data) {
     }
 }
 
-// Consumidor para eventos de cambio de contraseña
+// Consumidor para eventos de cambio de contraseña ya confirmados
 export async function passwordChangeEvents() {
     try {
         const connection = await amqp.connect(RABBITMQ_URL);
@@ -183,6 +224,109 @@ export async function passwordChangeEvents() {
                 const data = JSON.parse(msg.content.toString());
                 console.log('Mensaje de cambio de contraseña recibido:', data);
                 await sendPasswordChangeEmail(data);
+                channel.ack(msg);
+            }
+        }, { noAck: false });
+
+        connection.on('close', () => {
+            console.error('Conexión cerrada en passwordChangeEvents, intentando reconectar en 5s...');
+            setTimeout(passwordChangeEvents, 5000);
+        });
+    } catch (error) {
+        console.log('Error al conectar con RabbitMQ en passwordChangeEvents:', error.message);
+        console.log('Reintentando en 5s...');
+        setTimeout(passwordChangeEvents, 5000);
+    }
+}
+
+async function sendPasswordConfirm(data) {
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: data.email,
+        subject: 'Cambio de Contraseña',
+        html: `
+        <div style="
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #444; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            overflow: hidden;">
+            <header style="
+                background-color: #3498db; 
+                padding: 20px; 
+                text-align: center;">
+                <h1 style="color: white; font-size: 24px; margin: 0;">Cambio de Contraseña</h1>
+            </header>
+            <div style="padding: 20px;">
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    Hola <strong>${data.email}</strong>,
+                </p>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    Has solicitado cambiar tu contraseña. A continuación, confirma el cambio de tu contraseña:
+                <p style="text-align: center;">
+                    <a href="https://userspf-production.up.railway.app/users/change-password/${data.email}" 
+                       style="
+                       display: inline-block; 
+                       padding: 15px 30px; 
+                       background-color: #3498db; 
+                       color: white; 
+                       text-decoration: none; 
+                       border-radius: 5px; 
+                       font-size: 16px; 
+                       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">
+                        Confirmar cambio de contraseña
+                    </a>
+                </p>
+                <p style="font-size: 14px; color: #777; margin-top: 20px; text-align: center;">
+                    Si no solicitaste este cambio, ignora este correo.
+                </p>
+            </div>
+            <footer style="
+                background-color: #f8f9fa; 
+                text-align: center; 
+                padding: 10px; 
+                font-size: 12px; 
+                color: #aaa;">
+                &copy; 2025 Tu Empresa. Todos los derechos reservados.
+            </footer>
+        </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email de cambio de contraseña enviado con éxito');
+    } catch (error) {
+        console.error('Error enviando el email de cambio de contraseña:', error.message);
+    }
+}
+
+
+// Consumidor para eventos de cambio de contraseña sin confirmar
+export async function passwordChangeEventsConfirm() {
+    try {
+        const connection = await amqp.connect(RABBITMQ_URL);
+        const channel = await connection.createChannel();
+
+        const exchange = 'users_event';
+        const queue = 'passwords_change_queue';
+        const routingKey = 'user.passwords.changed';
+
+        await channel.assertExchange(exchange, 'topic', { durable: true });
+        await channel.assertQueue(queue, { durable: true });
+        await channel.bindQueue(queue, exchange, routingKey);
+
+        console.log(`Esperando mensajes en ${queue}`);
+
+        channel.consume(queue, async (msg) => {
+            if (msg !== null) {
+                const data = JSON.parse(msg.content.toString());
+                console.log('Mensaje de cambio de contraseña recibido:', data);
+                await sendPasswordConfirm(data);
                 channel.ack(msg);
             }
         }, { noAck: false });
