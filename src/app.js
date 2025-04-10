@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import express from "express";
 import emailRoutes from "./routes/emailRoute.js";
-import { userEvents, paymentEvents, passwordChangeEvents  } from "./services/rabbitService.js";
+import { userEvents, paymentEvents, passwordChangeEvents, passwordChangeEventsConfirm   } from "./services/rabbitService.js";
 
 const app = express();
 
