@@ -14,19 +14,13 @@ async function sendEmail(user) {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.username,
-        subject: 'Bienvenido',
+        subject: '¡Bienvenido a nuestra comunidad!',
         html: `
-            <div style="text-align: center; font-family: Arial, sans-serif; background-color: grey; color: black;">
-                <p></p>
-                <h1>Bienvenido!</h1>
-                <h2>${user.username}</h2>
-                <p>Gracias por registrarte en nuestro sistema</p>
-                <p>Tu contraseña segura temporal es:</p>
-                <p>${user.password}</p>
-                <p></p>
-                <p>Por favor cambia la contraseña</p>
-                <p></p>
-                <p></p>
+            <div style="text-align: center; font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; padding: 20px; border-radius: 10px;">
+                <h1 style="color: #4CAF50;">¡Bienvenido, ${user.username}!</h1>
+                <p style="font-size: 18px; line-height: 1.5;">Gracias por unirte a nuestra plataforma. Estamos emocionados de tenerte aquí y esperamos que disfrutes de todo lo que tenemos para ofrecer.</p>
+                <p style="font-size: 16px; line-height: 1.5;">Explora nuestras funcionalidadess y empieza tu nueva experiencia.</p>
+                <p style="margin-top: 30px; font-size: 14px; color: #777;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:support@example.com" style="color: #4CAF50;">support@gmail.com</a>.</p>
             </div>
         `
     };
